@@ -40,6 +40,23 @@ module OpenXml
       parts['word/document.xml'] = flatten_xml doc
     end
 
+    # Replace content controls matched by tag
+    def process_content_controls(controls)
+      @parts = @parts_cache.clone
+      register_type 'message/rfc822', 'mht'
+
+      doc = Nokogiri::XML(parts['word/document.xml'])
+
+      controls.each do |key, value|
+        sdt = doc.xpath("//w:tag[@w:val='#{key.to_s}']").first.parent.parent
+        node = sdt.xpath(".//w:t").first
+        node.content = value[:text] unless value[:html]
+        process_html(node, key, value, doc) if value[:html]
+      end
+
+      parts['word/document.xml'] = flatten_xml doc
+    end
+
     private
 
     def process_plain_text(node, key, value, doc)

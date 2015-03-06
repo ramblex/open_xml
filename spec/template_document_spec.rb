@@ -5,6 +5,7 @@ require 'pry'
 
 describe TemplateDocument do
 
+  let(:controls_path){"#{File.expand_path('samples', File.dirname(__FILE__))}/content_controls.docx"}
   let(:template_path){"#{File.expand_path('samples', File.dirname(__FILE__))}/template_sample.docx"}
   let(:report_path){"#{File.expand_path('samples', File.dirname(__FILE__))}/report.docx"}
 
@@ -68,6 +69,15 @@ describe TemplateDocument do
     doc = Nokogiri::XML(t.parts['word/document.xml'])
 
     doc.text[/carlos/].wont_be_nil
+  end
+
+  it "should replace content controls" do
+    t = TemplateDocument.new(path: controls_path)
+    t.process_content_controls({ id: { text: "Hello, World" } })
+    doc = Nokogiri::XML(t.parts['word/document.xml'])
+
+    text = doc.xpath('//w:t').text
+    text[/Hello, World/].wont_be_nil
   end
 
 end

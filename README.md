@@ -44,6 +44,16 @@ doc = OpenXml::TemplateDocument.new(path: "[path to template]")
 doc.process({"[SUPERPOWER]" => {text: "<img src='/powers.png' />", html: true, images: {'/powers.png' => "[Base64 encoded image]"}}})
 ```
 
+Replacing content controls by tag
+
+```ruby
+doc = OpenXml::TemplateDocument.new(path: "[path to template]")
+doc.process_content_controls({
+  my_tag: { text: "Replace content control!" },
+  my_html_tag_thing: { text: "<h1>Hooray for HTML</h1>", html: true }
+})
+```
+
 ## Todo
   * ~~Implement reading and writing the word zip files~~
   * ~~Create a template word document with formatted key words (bold, 14pt).~~
