@@ -10,6 +10,7 @@ module OpenXml
       @parts = {}
 
       read_files
+      register_type 'message/rfc822', 'mht'
     end
 
     def to_zip_buffer
@@ -19,6 +20,14 @@ module OpenXml
           w.write value
         end
       end
+    end
+
+    # Clones a given node and makes the clone a sibling.
+    def clone_node(path)
+      doc = Nokogiri::XML(parts['word/document.xml'])
+      thing = doc.xpath(path).first
+      thing.add_next_sibling(thing.clone)
+      parts['word/document.xml'] = flatten_xml(doc)
     end
 
     def process(data)
@@ -40,18 +49,15 @@ module OpenXml
       parts['word/document.xml'] = flatten_xml doc
     end
 
-    # Replace content controls matched by tag
-    def process_content_controls(controls)
-      @parts = @parts_cache.clone
-      register_type 'message/rfc822', 'mht'
-
+    def process_content_controls(controls, idx = 0)
       doc = Nokogiri::XML(parts['word/document.xml'])
+      doc.xpath("//w:showingPlcHdr").remove
 
       controls.each do |key, value|
-        sdt = doc.xpath("//w:tag[@w:val='#{key.to_s}']").first.parent.parent
-        node = sdt.xpath(".//w:t").first
+        sdt = doc.xpath("//w:tag[@w:val='#{key.to_s}']")
+        node = sdt[idx].parent.parent.xpath(".//w:t").first
         node.content = value[:text] unless value[:html]
-        process_html(node, key, value, doc) if value[:html]
+        process_html(node, key.to_s + ('a'..'z').to_a[idx], value, doc) if value[:html]
       end
 
       parts['word/document.xml'] = flatten_xml doc
